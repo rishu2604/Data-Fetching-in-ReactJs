@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import Places from './Places.jsx';
+import Error from './Error.jsx';
 
 export default function AvailablePlaces({ onSelectPlace }) {
-  const [ availablePlaces, setAvailablePlaces ] = useState([]);
-  const [ isFetching, setIsFetching ] = useState(false);
+  const [ availablePlaces, setAvailablePlaces ] = useState([]); // data state
+  const [ isFetching, setIsFetching ] = useState(false); // loading state
+  const [ error, setError ] = useState(); //error state
 
   // It is provided by the browser and can be used to both send and fetch data 
   // it takes the URL 
@@ -34,13 +36,34 @@ export default function AvailablePlaces({ onSelectPlace }) {
   useEffect(()=>{
     async function fetchPlaces(){
       setIsFetching(true);
-      const response = await fetch('http://localhost:3000/places');
-      const resData = await response.json();
-      setAvailablePlaces(resData.places);
+
+      try{
+        const response = await fetch('http://localhost:3000/places');
+        const resData = await response.json();
+  
+        // if response returns a success, the status code will be 200 or 300
+        // if response returns a failure, the status code will be 400 or 500
+  
+        if(!response.ok){
+          // instantiating built-in error class
+          // But it leads to crashing of an app
+          // to tackle this problem we should use try catch block
+          // We can wrap this code in try catch block to update the UI and not crash the app
+          throw new Error('Failed to fetch places')
+        }
+        setAvailablePlaces(resData.places);
+      } 
+      catch(error){
+        setError({message: error.message || 'Could not fetch places, please try again later.'})
+      }
       setIsFetching(false);
     }
     fetchPlaces();
   }, [])
+
+  if(error){
+    return <Error title="An error occured!" message={error.message} />
+  }
 
   return (
     <Places
